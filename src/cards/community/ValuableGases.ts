@@ -19,23 +19,32 @@ export class ValuableGases extends PreludeCard implements IProjectCard {
     }
 
     public addPlayCardDeferredAction(player: Player, game: Game) {
-        const playableCards = player.getPlayableCards(game).filter((card) => card.resourceType === ResourceType.FLOATER && card.tags.indexOf(Tags.VENUS) !== -1);
+        const playableCards = player.getPlayableCards(game).filter((card) => card.tags.indexOf(Tags.VENUS) !== -1);
             
         if (playableCards.length > 0) {
             game.defer(new DeferredAction(
                 player,
                 () => new SelectCard(
-                    "Select Venus floater card to play and add 4 floaters",
+                    "Select Venus card to play and add 4 floaters",
                     "Save",
                     playableCards,
                     (cards: Array<IProjectCard>) => {
                         const canUseSteel = cards[0].tags.indexOf(Tags.STEEL) !== -1;
                         const canUseTitanium = cards[0].tags.indexOf(Tags.SPACE) !== -1;
                         const cardCost = player.getCardCost(game, cards[0]);
-
-                        game.defer(new SelectHowToPayDeferred(player, cardCost, canUseSteel, canUseTitanium, "Select how to pay for card"));
-                        player.playCard(game, cards[0]);
-                        player.addResourceTo(cards[0], 4);
+                        game.defer(new SelectHowToPayDeferred(
+                            player,
+                            cardCost,
+                            canUseSteel,
+                            canUseTitanium,
+                            "Select how to pay for card",
+                            () => {
+                                player.playCard(game, cards[0]);
+                                if (cards[0].resourceType === ResourceType.FLOATER) {
+                                    player.addResourceTo(cards[0], 4);
+                                }
+                            }
+                        ));
                         return undefined;
                     }
                 )
